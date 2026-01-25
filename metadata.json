@@ -1,0 +1,5 @@
+{
+  "name": "Planet Keripik Dashboard",
+  "description": "A comprehensive Purchase Order management system for Planet Keripik, featuring Incoming/Outgoing PO tracking, statistics, and Google Calendar integration for deadline management.",
+  "requestFramePermissions": []
+}
