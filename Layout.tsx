@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, FileInput, FileOutput, History, Settings, Menu, X, ChevronRight, LogOut, FileText, ListOrdered, Package, Truck } from 'lucide-react';
+import { LayoutDashboard, FileInput, FileOutput, History, Settings, Menu, X, ChevronRight, LogOut, FileText, ListOrdered, Package, Truck, StickyNote, ScrollText } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
@@ -13,23 +13,33 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const location = useLocation();
 
-  const navItems = [
-    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
-    { name: 'Buat Invoice', path: '/invoice/create', icon: <FileText size={20} /> },
-    { name: 'Riwayat Invoice', path: '/invoice/history', icon: <ListOrdered size={20} /> },
-    { name: 'PO Masuk', path: '/po-masuk', icon: <FileInput size={20} /> },
-    { name: 'PO Keluar', path: '/po-keluar', icon: <FileOutput size={20} /> },
-    { name: 'Riwayat PO', path: '/history', icon: <History size={20} /> },
-    { name: 'Surat Jalan', path: '/surat-jalan', icon: <Truck size={20} /> },
-    { name: 'Stok Gudang', path: '/inventory', icon: <Package size={20} /> },
-    { name: 'Pengaturan', path: '/settings', icon: <Settings size={20} /> },
-  ];
-
   const isActive = (path: string) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
 
   React.useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  const NavItem = ({ name, path, icon }: { name: string; path: string; icon: React.ReactNode }) => {
+    const active = isActive(path);
+    return (
+      <Link
+        to={path}
+        className={`group flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+          active
+            ? 'bg-amber-50 text-amber-700 shadow-sm shadow-amber-100 translate-x-1'
+            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:translate-x-1'
+        }`}
+      >
+        <div className="flex items-center gap-3.5">
+          <span className={`transition-colors duration-300 ${active ? 'text-amber-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
+            {icon}
+          </span>
+          {item.name}
+        </div>
+        {active && <ChevronRight size={16} className="text-amber-500 animate-pulse" />}
+      </Link>
+    );
+  };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -47,30 +57,53 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </div>
       
-      <div className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">
-        <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Menu Utama</p>
-        {navItems.map((item) => {
-          const active = isActive(item.path);
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`group flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-300 ${
-                active
-                  ? 'bg-amber-50 text-amber-700 shadow-sm shadow-amber-100 translate-x-1'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:translate-x-1'
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <span className={`transition-colors duration-300 ${active ? 'text-amber-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
-                  {item.icon}
-                </span>
-                {item.name}
-              </div>
-              {active && <ChevronRight size={16} className="text-amber-500 animate-pulse" />}
-            </Link>
-          );
-        })}
+      <div className="flex-1 px-3 py-6 space-y-6 overflow-y-auto custom-scrollbar">
+        
+        {/* DASHBOARD */}
+        <div>
+           <NavItem name="Dashboard" path="/" icon={<LayoutDashboard size={20} />} />
+        </div>
+
+        {/* SURAT PO */}
+        <div>
+           <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">SURAT PO</p>
+           <div className="space-y-1">
+              <NavItem name="PO Masuk" path="/po-masuk" icon={<FileInput size={20} />} />
+              <NavItem name="PO Keluar" path="/po-keluar" icon={<FileOutput size={20} />} />
+              <NavItem name="Riwayat PO" path="/history" icon={<History size={20} />} />
+           </div>
+        </div>
+
+        {/* INVOICE & LABEL */}
+        <div>
+           <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">TAGIHAN & LABEL</p>
+           <div className="space-y-1">
+              <NavItem name="Buat Invoice" path="/invoice/create" icon={<FileText size={20} />} />
+              <NavItem name="Riwayat Invoice" path="/invoice/history" icon={<ListOrdered size={20} />} />
+              {/* MENU BARU */}
+              <NavItem name="Buat Stiker" path="/stiker/create" icon={<StickyNote size={20} />} />
+              <NavItem name="Riwayat Stiker" path="/stiker/history" icon={<ScrollText size={20} />} />
+           </div>
+        </div>
+
+        {/* SURAT JALAN */}
+        <div>
+           <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">LOGISTIK</p>
+           <div className="space-y-1">
+              <NavItem name="Buat Surat Jalan" path="/surat-jalan/create" icon={<Truck size={20} />} />
+              <NavItem name="Riwayat Surat Jalan" path="/surat-jalan" icon={<ListOrdered size={20} />} />
+              <NavItem name="Stok Gudang" path="/inventory" icon={<Package size={20} />} />
+           </div>
+        </div>
+
+        {/* PENGATURAN */}
+        <div>
+           <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">LAINNYA</p>
+           <div className="space-y-1">
+              <NavItem name="Pengaturan" path="/settings" icon={<Settings size={20} />} />
+           </div>
+        </div>
+
       </div>
 
       <div className="p-4 mt-auto">
