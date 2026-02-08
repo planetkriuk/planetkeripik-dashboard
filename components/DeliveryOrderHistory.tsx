@@ -11,6 +11,7 @@ import html2canvas from 'html2canvas';
 const ITEMS_PER_PAGE = 10;
 const LOGO_URL = "https://raw.githubusercontent.com/habibiegl/planetkeripiklogo/f138730adcd58a09fc5cd7ffb9d65a7fa314b96b/Logo%20Planet%20Keripik%20P.png";
 const TTD_URL = "https://raw.githubusercontent.com/habibiegl/planetkeripiklogo/f138730adcd58a09fc5cd7ffb9d65a7fa314b96b/TTD%20Pak%20Misdi.png";
+const STEMPEL_URL = "https://raw.githubusercontent.com/habibiegl/planetkeripiklogo/f138730adcd58a09fc5cd7ffb9d65a7fa314b96b/Stempel%20Planet%20Keripik.png";
 
 const DeliveryOrderHistory: React.FC = () => {
   const navigate = useNavigate();
@@ -329,7 +330,7 @@ const DeliveryOrderHistory: React.FC = () => {
                                                 <td className="py-3 px-4 text-center font-bold text-slate-500">{idx + 1}</td>
                                                 <td className="py-3 px-4 font-bold text-slate-800">{item.name}</td>
                                                 <td className="py-3 px-4 text-slate-600">{item.specification}</td>
-                                                <td className="py-3 px-4 text-center font-bold text-slate-900 text-lg">{item.quantity}</td>
+                                                <td className="py-3 px-4 text-center font-bold text-slate-900 text-lg">{item.quantity} {item.unit && <span className="text-xs font-normal text-slate-500 ml-1">{item.unit}</span>}</td>
                                                 <td className="py-3 px-4 text-slate-500 text-xs italic">{item.notes}</td>
                                                 <td className="py-3 px-4 text-center border-l border-slate-200">
                                                     <div className="w-5 h-5 border-2 border-slate-300 rounded mx-auto"></div>
@@ -346,9 +347,12 @@ const DeliveryOrderHistory: React.FC = () => {
                                     <div className="w-40 text-center">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">Hormat Kami (Admin)</p>
                                         <div className="h-20 flex items-end justify-center relative">
-                                            <img src={TTD_URL} className="h-20 opacity-80" alt="TTD"/>
+                                            {/* Tanda Tangan */}
+                                            <img src={TTD_URL} className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-20 opacity-80 z-10" alt="TTD"/>
+                                            {/* Stempel */}
+                                            <img src={STEMPEL_URL} className="absolute bottom-[-5px] left-1/2 transform -translate-x-1/2 h-24 opacity-60 mix-blend-multiply rotate-[-6deg] z-0" alt="Stempel"/>
                                         </div>
-                                        <div className="border-t border-slate-400 pt-2">
+                                        <div className="border-t border-slate-400 pt-2 relative z-20">
                                             <p className="font-bold text-xs uppercase text-slate-800">{selectedOrder.warehouseStaff || 'Admin Gudang'}</p>
                                         </div>
                                     </div>
