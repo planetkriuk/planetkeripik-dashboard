@@ -328,65 +328,36 @@ const DeliveryOrderForm: React.FC = () => {
                  </button>
                </div>
               
-              <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200 mb-8 shadow-sm">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-3 w-[40%]">Nama Barang</th>
-                      <th className="px-4 py-3 w-[25%]">Varian / Spec</th>
-                      <th className="px-4 py-3 text-center w-[15%]">Qty</th>
-                      <th className="px-4 py-3 w-[15%]">Keterangan</th>
-                      <th className="px-4 py-3 w-[50px]"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {items.map((item, index) => (
-                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-3 align-top">
-                          <input type="text" required placeholder="Nama Barang..."
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-900 text-sm font-bold"
-                            value={item.name} onChange={e => updateItem(index, 'name', e.target.value)} />
-                        </td>
-                        <td className="p-3 align-top">
-                          <input type="text" placeholder="Spec..."
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-900 text-sm"
-                            value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} />
-                        </td>
-                        <td className="p-3 align-top">
-                          <input type="number" min="1" required
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-center text-sm font-bold"
-                            value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 0)} />
-                        </td>
-                        <td className="p-3 align-top">
-                          <input type="text" placeholder="Kondisi..."
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-900 text-sm"
-                            value={item.notes} onChange={e => updateItem(index, 'notes', e.target.value)} />
-                        </td>
-                        <td className="p-3 text-center align-middle">
-                            <button type="button" onClick={() => removeItem(index)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                <Trash2 size={16} />
-                            </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Mobile View */}
-              <div className="md:hidden space-y-4">
+              {/* VERTICAL LIST / CARD VIEW */}
+              <div className="space-y-6 mb-8">
                   {items.map((item, index) => (
-                      <div key={item.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200 relative">
-                          <button type="button" onClick={() => removeItem(index)} className="absolute top-2 right-2 p-2 text-slate-400 hover:text-red-500">
-                             <Trash2 size={16} />
+                      <div key={item.id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 relative shadow-sm hover:shadow-md transition-shadow">
+                          <button type="button" onClick={() => removeItem(index)} className="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-500 bg-white rounded-lg shadow-sm border border-slate-100">
+                             <Trash2 size={18} />
                           </button>
-                          <div className="space-y-3 pr-8">
-                             <input type="text" required placeholder="Nama Barang" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold" value={item.name} onChange={e => updateItem(index, 'name', e.target.value)} />
-                             <div className="flex gap-2">
-                                <input type="text" placeholder="Spec" className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} />
-                                <input type="number" className="w-20 px-3 py-2 rounded-lg border border-slate-200 text-sm text-center font-bold" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value))} />
-                             </div>
-                             <input type="text" placeholder="Catatan" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs" value={item.notes} onChange={e => updateItem(index, 'notes', e.target.value)} />
+                          
+                          {/* Nama Barang */}
+                          <div className="mb-4">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Nama Barang</label>
+                             <input type="text" required placeholder="Contoh: Keripik Singkong" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-900" value={item.name} onChange={e => updateItem(index, 'name', e.target.value)} />
+                          </div>
+
+                          {/* Varian / Spec */}
+                          <div className="mb-4">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Varian / Spec</label>
+                             <input type="text" placeholder="Contoh: Balado 200g" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-900" value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} />
+                          </div>
+
+                          {/* Qty */}
+                          <div className="mb-4">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Jumlah (Qty)</label>
+                             <input type="number" className="w-32 px-4 py-3 rounded-xl border border-slate-200 text-lg text-center font-bold text-slate-900" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value))} />
+                          </div>
+
+                          {/* Keterangan */}
+                          <div>
+                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Keterangan / Kondisi</label>
+                             <input type="text" placeholder="Contoh: Dus Penyok, Segel Aman..." className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm" value={item.notes} onChange={e => updateItem(index, 'notes', e.target.value)} />
                           </div>
                       </div>
                   ))}
