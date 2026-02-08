@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { generateInvoiceNumber, saveInvoice, getInvoices, getInvoiceById, getPOs, getAppSettings } from '../services/storage';
 import { submitInvoiceToGoogle } from '../services/googleSheetService';
 import { Invoice, InvoiceStatus, POItem, POType, POStatus } from '../types';
-import { Plus, Trash2, Save, Calendar, User, Package, ArrowLeft, Loader2, Lock, Percent, CreditCard, FileText, Wallet } from 'lucide-react';
+import { Plus, Trash2, Save, Calendar, User, Package, ArrowLeft, Loader2, Lock, Percent, CreditCard, FileText, Wallet, ChevronDown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from './Toast';
 
@@ -358,124 +358,73 @@ const InvoiceForm: React.FC = () => {
                <div className="flex items-center justify-between mb-6">
                  <SectionTitle icon={<Package size={18} />} title="Rincian Item" />
                  {!isReadOnly && (
-                    <button type="button" onClick={addItem} className="hidden md:flex text-sm items-center gap-1.5 bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900 font-bold transition-all shadow-lg shadow-slate-200">
+                    <button type="button" onClick={addItem} className="text-sm flex items-center gap-1.5 bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900 font-bold transition-all shadow-lg shadow-slate-200">
                       <Plus size={16} /> <span className="hidden sm:inline">Tambah</span>
                     </button>
                  )}
                </div>
               
-              {/* DESKTOP TABLE VIEW */}
-              <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200 mb-8 shadow-sm">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-3 w-[25%]">Deskripsi</th>
-                      <th className="px-4 py-3 w-[20%]">Spec</th>
-                      <th className="px-4 py-3 w-[20%]">Qty / Satuan</th>
-                      <th className="px-4 py-3 w-[15%] text-right">Harga</th>
-                      <th className="px-4 py-3 w-[15%] text-right">Total</th>
-                      <th className="px-4 py-3 w-[50px]"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {items.map((item, index) => (
-                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-3 align-top">
-                          <input type="text" required readOnly={isReadOnly} list="product-list"
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-900 text-sm font-semibold"
-                            value={item.name} onChange={e => updateItem(index, 'name', e.target.value)} />
-                        </td>
-                        <td className="p-3 align-top">
-                          <input type="text" readOnly={isReadOnly} list="spec-list"
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-900 text-sm"
-                            value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} />
-                        </td>
-                        <td className="p-3 align-top">
-                           <div className="flex items-center gap-1">
-                                <input type="number" min="1" required readOnly={isReadOnly}
-                                    className="w-16 px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-center text-sm font-bold"
-                                    value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 0)} />
-                                <select 
-                                    disabled={isReadOnly}
-                                    className="w-20 px-1 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium cursor-pointer"
-                                    value={item.unit || 'Pcs'} onChange={e => updateItem(index, 'unit', e.target.value)}
-                                >
-                                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
-                                </select>
-                            </div>
-                        </td>
-                        <td className="p-3 align-top">
-                          <input type="number" min="0" required readOnly={isReadOnly}
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-900 text-right text-sm"
-                            value={item.unitPrice} onChange={e => updateItem(index, 'unitPrice', parseInt(e.target.value) || 0)} />
-                        </td>
-                        <td className="p-3 text-right font-bold text-slate-800 text-sm align-middle bg-slate-50/30">
-                          {item.totalPrice.toLocaleString('id-ID')}
-                        </td>
-                        <td className="p-3 text-center align-middle">
-                          {!isReadOnly && (
-                            <button type="button" onClick={() => removeItem(index)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                <Trash2 size={16} />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* MOBILE CARD VIEW */}
-              <div className="md:hidden space-y-5 mb-8">
+              {/* VERTICAL LIST / CARD VIEW */}
+              <div className="space-y-6 mb-8">
                 {items.map((item, index) => (
-                  <div key={item.id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 relative shadow-sm">
+                  <div key={item.id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 relative shadow-sm hover:shadow-md transition-shadow">
                      {!isReadOnly && (
-                        <button type="button" onClick={() => removeItem(index)} className="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-500 transition-colors">
+                        <button type="button" onClick={() => removeItem(index)} className="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-500 bg-white rounded-lg shadow-sm border border-slate-100">
                            <Trash2 size={18} />
                         </button>
                      )}
-                     <div className="space-y-4">
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Deskripsi Item</label>
-                           <input type="text" required readOnly={isReadOnly} list="product-list"
-                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-sm"
-                              value={item.name} onChange={e => updateItem(index, 'name', e.target.value)} placeholder="Nama Barang..." />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                           <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Spec</label>
-                              <input type="text" readOnly={isReadOnly} list="spec-list"
-                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:border-amber-500 font-medium"
-                                value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} />
+                     
+                     {/* 1. Nama Item */}
+                     <div className="mb-4">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Deskripsi Item</label>
+                        <input type="text" required readOnly={isReadOnly} list="product-list"
+                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
+                           value={item.name} onChange={e => updateItem(index, 'name', e.target.value)} placeholder="Nama Barang..." />
+                     </div>
+
+                     {/* 2. Spesifikasi */}
+                     <div className="mb-4">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Spec / Varian</label>
+                        <input type="text" readOnly={isReadOnly} list="spec-list"
+                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:border-amber-500 font-medium transition-all"
+                           value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} placeholder="Contoh: Merah, XL..." />
+                     </div>
+
+                     {/* 3. QTY dan Satuan */}
+                     <div className="mb-4">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Jumlah (Qty) & Satuan</label>
+                        <div className="flex gap-2">
+                           <input type="number" min="1" required readOnly={isReadOnly}
+                              className="w-1/2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-center font-bold text-lg focus:border-amber-500 transition-all"
+                              value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 0)} />
+                           <div className="w-1/2 relative">
+                              <select 
+                                 disabled={isReadOnly}
+                                 className="w-full h-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold appearance-none focus:border-amber-500 cursor-pointer"
+                                 value={item.unit || 'Pcs'} onChange={e => updateItem(index, 'unit', e.target.value)}
+                              >
+                                 {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                              </select>
+                              <ChevronDown className="absolute right-3 top-4 text-slate-400 pointer-events-none" size={16}/>
                            </div>
-                           <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Qty & Satuan</label>
-                              <div className="flex gap-1">
-                                <input type="number" min="1" required readOnly={isReadOnly}
-                                    className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-center font-bold focus:border-amber-500"
-                                    value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 0)} />
-                                <select 
-                                    disabled={isReadOnly}
-                                    className="w-1/2 px-2 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold"
-                                    value={item.unit || 'Pcs'} onChange={e => updateItem(index, 'unit', e.target.value)}
-                                >
-                                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
-                                </select>
-                              </div>
-                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 items-end">
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Harga Satuan</label>
-                              <input type="number" min="0" required readOnly={isReadOnly}
-                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:border-amber-500 font-medium"
-                                value={item.unitPrice} onChange={e => updateItem(index, 'unitPrice', parseInt(e.target.value) || 0)} />
-                            </div>
-                            <div className="text-right pb-3 border-b border-slate-200">
-                               <p className="text-[10px] text-slate-400 mb-0.5">Total</p>
-                               <p className="font-bold text-lg text-slate-800">Rp {item.totalPrice.toLocaleString('id-ID')}</p>
-                            </div>
+                     </div>
+
+                     {/* 4. Harga Satuan */}
+                     <div className="mb-4">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Harga Satuan</label>
+                        <div className="relative">
+                           <span className="absolute left-4 top-3.5 text-slate-400 font-bold text-sm">Rp</span>
+                           <input type="number" min="0" required readOnly={isReadOnly}
+                              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold focus:border-amber-500 transition-all"
+                              value={item.unitPrice} onChange={e => updateItem(index, 'unitPrice', parseInt(e.target.value) || 0)} />
                         </div>
+                     </div>
+
+                     {/* 5. Total */}
+                     <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total</span>
+                        <span className="text-xl font-black text-slate-800">Rp {item.totalPrice.toLocaleString('id-ID')}</span>
                      </div>
                   </div>
                 ))}
@@ -562,6 +511,7 @@ const InvoiceForm: React.FC = () => {
           </div>
 
           <div className="col-span-12 lg:col-span-4 space-y-6">
+             {/* Right column logic remains the same */}
              <div className={`bg-white p-6 rounded-2xl shadow-sm border border-slate-200 ${isReadOnly ? 'opacity-80 pointer-events-none' : ''}`}>
               <SectionTitle icon={<Calendar size={18} />} title="Jadwal" />
                <div className="space-y-5">
