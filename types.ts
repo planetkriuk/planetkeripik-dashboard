@@ -42,6 +42,7 @@ export interface POItem {
   name: string;
   specification: string;
   quantity: number;
+  unit: string; // Added: Satuan (Pcs, Dus, dll)
   unitPrice: number;
   totalPrice: number;
 }
@@ -52,6 +53,7 @@ export interface DOItem {
   name: string;
   specification: string;
   quantity: number;
+  unit?: string; // Added optional
   notes?: string; // Kondisi barang dll
 }
 
