@@ -164,6 +164,16 @@ export interface DeliveryOrder {
   driverSignName?: string; // Nama Jelas Sopir
 }
 
+export interface ShippingLabel {
+  id: string;
+  dateCreated: string;
+  customerName: string;
+  address: string;
+  phone: string;
+  senderName: string; // Default: Planet Keripik
+  qrContent: string; // URL Website
+}
+
 export interface DashboardStats {
   totalIncoming: number;
   totalOutgoing: number;
