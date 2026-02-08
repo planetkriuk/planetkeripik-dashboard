@@ -553,7 +553,7 @@ export const HistoryPage: React.FC = () => {
                                                 <th className="py-3 px-4 text-center w-12 font-bold border-r border-slate-700">#</th>
                                                 <th className="py-3 px-4 text-left font-bold border-r border-slate-700">Deskripsi Barang</th>
                                                 <th className="py-3 px-4 text-left w-1/4 font-bold border-r border-slate-700">Spesifikasi</th>
-                                                <th className="py-3 px-4 text-center w-24 font-bold border-r border-slate-700">Qty</th>
+                                                <th className="py-3 px-4 text-center w-28 font-bold border-r border-slate-700">Qty</th>
                                                 <th className="py-3 px-4 text-right w-32 font-bold border-r border-slate-700">Harga Satuan</th>
                                                 <th className="py-3 px-4 text-right w-40 font-bold">Total</th>
                                             </tr>
@@ -564,7 +564,9 @@ export const HistoryPage: React.FC = () => {
                                                     <td className="py-4 px-4 text-center font-bold text-slate-500">{idx + 1}</td>
                                                     <td className="py-4 px-4 font-bold text-slate-800">{item.name}</td>
                                                     <td className="py-4 px-4 text-slate-600">{item.specification}</td>
-                                                    <td className="py-4 px-4 text-center font-bold text-slate-900">{item.quantity}</td>
+                                                    <td className="py-4 px-4 text-center font-bold text-slate-900">
+                                                        {item.quantity} <span className="text-xs font-normal text-slate-500 ml-1">{item.unit || 'Pcs'}</span>
+                                                    </td>
                                                     <td className="py-4 px-4 text-right text-slate-600">{item.unitPrice.toLocaleString('id-ID')}</td>
                                                     <td className="py-4 px-4 text-right font-bold text-slate-900">{item.totalPrice.toLocaleString('id-ID')}</td>
                                                 </tr>
