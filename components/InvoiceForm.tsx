@@ -252,7 +252,9 @@ const InvoiceForm: React.FC = () => {
     if (remainingBalance <= 0 && grandTotal > 0) {
         currentStatus = InvoiceStatus.PAID;
     } else if (totalPaid > 0 && remainingBalance > 0) {
-        currentStatus = InvoiceStatus.PARTIAL;
+        // Change default behavior: If partially paid, still mark as UNPAID (Belum Lunas) as per request
+        // Previously: currentStatus = InvoiceStatus.PARTIAL;
+        currentStatus = InvoiceStatus.UNPAID; 
     } else if (totalPaid === 0) {
         currentStatus = InvoiceStatus.UNPAID; // Reset to Unpaid if paid cleared
     }
