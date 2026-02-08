@@ -317,7 +317,7 @@ export const InvoiceHistory: React.FC = () => {
                                             <div className="pr-4">
                                                 <p className="font-bold text-slate-800 text-base mb-1">{item.name}</p>
                                                 <p className="text-sm text-slate-500 font-medium">
-                                                    {item.quantity} x @{item.unitPrice.toLocaleString('id-ID')}
+                                                    {item.quantity} {item.unit} x @{item.unitPrice.toLocaleString('id-ID')}
                                                 </p>
                                                 {item.specification && <p className="text-xs text-slate-400 mt-0.5">{item.specification}</p>}
                                             </div>
