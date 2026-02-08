@@ -36,7 +36,7 @@ const InvoiceForm: React.FC = () => {
   const [dateCreated, setDateCreated] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
   
-  const [items, setItems] = useState<POItem[]>([{ id: Date.now().toString(), name: '', specification: '', quantity: 1, unitPrice: 0, totalPrice: 0 }]);
+  const [items, setItems] = useState<POItem[]>([{ id: Date.now().toString(), name: '', specification: '', quantity: 1, unit: 'Pcs', unitPrice: 0, totalPrice: 0 }]);
   
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
@@ -55,6 +55,8 @@ const InvoiceForm: React.FC = () => {
 
   const [createdBy, setCreatedBy] = useState('');
   const [approvedBy, setApprovedBy] = useState('');
+
+  const UNIT_OPTIONS = ['Pcs', 'Dus', 'Bal', 'Pack', 'Kg', 'Lusin', 'Karton', 'Sak'];
 
   useEffect(() => {
     // Load Settings First
@@ -91,7 +93,11 @@ const InvoiceForm: React.FC = () => {
         setContactPhone(inv.contactPhone || '');
         setDateCreated(inv.dateCreated);
         setDueDate(inv.dueDate);
-        setItems(inv.items);
+        
+        // Ensure unit exists
+        const patchedItems = inv.items.map(i => ({...i, unit: i.unit || 'Pcs'}));
+        setItems(patchedItems);
+
         setDiscount(inv.discount);
         setTax(inv.tax);
         setNotes(inv.notes || '');
@@ -139,7 +145,8 @@ const InvoiceForm: React.FC = () => {
           // Import Items
           const importedItems = po.items.map(item => ({
               ...item,
-              id: Date.now().toString() + Math.random() // Regen ID
+              id: Date.now().toString() + Math.random(), // Regen ID
+              unit: item.unit || 'Pcs'
           }));
           setItems(importedItems);
           
@@ -161,7 +168,7 @@ const InvoiceForm: React.FC = () => {
 
   const addItem = () => {
     if (isReadOnly) return;
-    setItems([...items, { id: Date.now().toString(), name: '', specification: '', quantity: 1, unitPrice: 0, totalPrice: 0 }]);
+    setItems([...items, { id: Date.now().toString(), name: '', specification: '', quantity: 1, unit: 'Pcs', unitPrice: 0, totalPrice: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -362,9 +369,9 @@ const InvoiceForm: React.FC = () => {
                 <table className="w-full text-sm text-left">
                   <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                     <tr>
-                      <th className="px-4 py-3 w-[30%]">Deskripsi</th>
+                      <th className="px-4 py-3 w-[25%]">Deskripsi</th>
                       <th className="px-4 py-3 w-[20%]">Spec</th>
-                      <th className="px-4 py-3 text-center w-[10%]">Qty</th>
+                      <th className="px-4 py-3 w-[20%]">Qty / Satuan</th>
                       <th className="px-4 py-3 w-[15%] text-right">Harga</th>
                       <th className="px-4 py-3 w-[15%] text-right">Total</th>
                       <th className="px-4 py-3 w-[50px]"></th>
@@ -384,9 +391,18 @@ const InvoiceForm: React.FC = () => {
                             value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} />
                         </td>
                         <td className="p-3 align-top">
-                          <input type="number" min="1" required readOnly={isReadOnly}
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-center text-sm font-bold"
-                            value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 0)} />
+                           <div className="flex items-center gap-1">
+                                <input type="number" min="1" required readOnly={isReadOnly}
+                                    className="w-16 px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-center text-sm font-bold"
+                                    value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 0)} />
+                                <select 
+                                    disabled={isReadOnly}
+                                    className="w-20 px-1 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium cursor-pointer"
+                                    value={item.unit || 'Pcs'} onChange={e => updateItem(index, 'unit', e.target.value)}
+                                >
+                                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                            </div>
                         </td>
                         <td className="p-3 align-top">
                           <input type="number" min="0" required readOnly={isReadOnly}
@@ -433,10 +449,19 @@ const InvoiceForm: React.FC = () => {
                                 value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} />
                            </div>
                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Qty</label>
-                              <input type="number" min="1" required readOnly={isReadOnly}
-                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-center font-bold focus:border-amber-500"
-                                value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 0)} />
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Qty & Satuan</label>
+                              <div className="flex gap-1">
+                                <input type="number" min="1" required readOnly={isReadOnly}
+                                    className="w-1/2 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-center font-bold focus:border-amber-500"
+                                    value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 0)} />
+                                <select 
+                                    disabled={isReadOnly}
+                                    className="w-1/2 px-2 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold"
+                                    value={item.unit || 'Pcs'} onChange={e => updateItem(index, 'unit', e.target.value)}
+                                >
+                                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                              </div>
                            </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4 items-end">
