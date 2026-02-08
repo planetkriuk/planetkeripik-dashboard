@@ -1,15 +1,17 @@
 
-import { PurchaseOrder, POType, POStatus, POItem, Invoice, InvoiceStatus, DeliveryOrder, DeliveryStatus, AppSettings } from '../types';
+import { PurchaseOrder, POType, POStatus, POItem, Invoice, InvoiceStatus, DeliveryOrder, DeliveryStatus, AppSettings, ShippingLabel } from '../types';
 
 const STORAGE_KEY = 'planet_keripik_pos';
 const INVOICE_STORAGE_KEY = 'planet_keripik_invoices';
 const DO_STORAGE_KEY = 'planet_keripik_dos';
+const LABEL_STORAGE_KEY = 'planet_keripik_labels';
 const SETTINGS_KEY = 'planet_keripik_settings';
 
 // CLEAN STATE: Tidak ada data dummy awal. Data akan diambil dari LocalStorage atau Google Sheets.
 const INITIAL_DATA: PurchaseOrder[] = [];
 const INITIAL_INVOICES: Invoice[] = [];
 const INITIAL_DOS: DeliveryOrder[] = [];
+const INITIAL_LABELS: ShippingLabel[] = [];
 
 const INITIAL_SETTINGS: AppSettings = {
   defaultAdminName: 'Admin Staff',
@@ -41,6 +43,7 @@ export const getAllDataJSON = () => {
     pos: getPOs(),
     invoices: getInvoices(),
     deliveryOrders: getDeliveryOrders(),
+    shippingLabels: getShippingLabels(),
     settings: getAppSettings(),
     timestamp: new Date().toISOString()
   });
@@ -52,6 +55,7 @@ export const restoreDataJSON = (jsonString: string): boolean => {
     if (data.pos) localStorage.setItem(STORAGE_KEY, JSON.stringify(data.pos));
     if (data.invoices) localStorage.setItem(INVOICE_STORAGE_KEY, JSON.stringify(data.invoices));
     if (data.deliveryOrders) localStorage.setItem(DO_STORAGE_KEY, JSON.stringify(data.deliveryOrders));
+    if (data.shippingLabels) localStorage.setItem(LABEL_STORAGE_KEY, JSON.stringify(data.shippingLabels));
     if (data.settings) localStorage.setItem(SETTINGS_KEY, JSON.stringify(data.settings));
     return true;
   } catch (e) {
@@ -64,6 +68,7 @@ export const clearAllData = () => {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(INVOICE_STORAGE_KEY);
   localStorage.removeItem(DO_STORAGE_KEY);
+  localStorage.removeItem(LABEL_STORAGE_KEY);
   // Keep settings usually, but for hard reset we remove it too
   localStorage.removeItem(SETTINGS_KEY); 
 };
@@ -277,4 +282,33 @@ export const generateDONumber = (): string => {
     }
   }
   return newDO;
+};
+
+// --- SHIPPING LABEL (STIKER) FUNCTIONS ---
+
+export const getShippingLabels = (): ShippingLabel[] => {
+  const data = localStorage.getItem(LABEL_STORAGE_KEY);
+  if (!data) {
+    localStorage.setItem(LABEL_STORAGE_KEY, JSON.stringify(INITIAL_LABELS));
+    return INITIAL_LABELS;
+  }
+  return JSON.parse(data);
+};
+
+export const saveShippingLabel = (label: ShippingLabel): void => {
+  const labels = getShippingLabels();
+  const existingIndex = labels.findIndex(l => l.id === label.id);
+  
+  if (existingIndex >= 0) {
+    labels[existingIndex] = label;
+  } else {
+    labels.push(label);
+  }
+  localStorage.setItem(LABEL_STORAGE_KEY, JSON.stringify(labels));
+};
+
+export const deleteShippingLabel = (id: string): void => {
+  const labels = getShippingLabels();
+  const newLabels = labels.filter(l => l.id !== id);
+  localStorage.setItem(LABEL_STORAGE_KEY, JSON.stringify(newLabels));
 };
