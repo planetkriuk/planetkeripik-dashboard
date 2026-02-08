@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { LayoutDashboard, FileInput, FileOutput, History, Settings, Menu, X, ChevronRight, LogOut, FileText, ListOrdered, Package, Truck, StickyNote, ScrollText } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
