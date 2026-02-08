@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { generateInvoiceNumber, saveInvoice, getInvoices, getInvoiceById, getPOs, getAppSettings } from '../services/storage';
 import { submitInvoiceToGoogle } from '../services/googleSheetService';
-import { Invoice, InvoiceStatus, POItem, POType, POStatus } from '../types';
-import { Plus, Trash2, Save, Calendar, User, Package, ArrowLeft, Loader2, Lock, Percent, CreditCard, FileText, Wallet, ChevronDown } from 'lucide-react';
+import { Invoice, InvoiceStatus, POItem, POType, POStatus, PaymentDetail } from '../types';
+import { Plus, Trash2, Save, Calendar, User, Package, ArrowLeft, Loader2, Lock, Percent, CreditCard, FileText, Wallet, ChevronDown, Clock } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from './Toast';
 
@@ -43,8 +43,13 @@ const InvoiceForm: React.FC = () => {
   const [discountPercent, setDiscountPercent] = useState<string>('');
   const [taxPercent, setTaxPercent] = useState<string>('');
 
-  // New DP / Payment State
-  const [totalPaid, setTotalPaid] = useState(0);
+  // MULTI PAYMENT STATE (4 Slots)
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetail[]>([
+    { amount: 0, date: '' },
+    { amount: 0, date: '' },
+    { amount: 0, date: '' },
+    { amount: 0, date: '' }
+  ]);
 
   const [notes, setNotes] = useState('');
   
@@ -102,7 +107,22 @@ const InvoiceForm: React.FC = () => {
         setTax(inv.tax);
         setNotes(inv.notes || '');
         setStatus(inv.status);
-        setTotalPaid(inv.totalPaid || 0);
+        
+        // LOAD PAYMENTS
+        if (inv.paymentDetails && inv.paymentDetails.length > 0) {
+            // Load existing, fill rest with empty
+            const loaded: PaymentDetail[] = [...inv.paymentDetails];
+            while(loaded.length < 4) loaded.push({ amount: 0, date: '' });
+            setPaymentDetails(loaded);
+        } else if (inv.totalPaid) {
+            // Legacy Support: Move totalPaid to Slot 1
+            setPaymentDetails([
+                { amount: inv.totalPaid, date: inv.dateCreated },
+                { amount: 0, date: '' },
+                { amount: 0, date: '' },
+                { amount: 0, date: '' }
+            ]);
+        }
         
         setBankName(inv.bankName);
         setAccountNumber(inv.accountNumber);
@@ -127,6 +147,15 @@ const InvoiceForm: React.FC = () => {
       const nextWeek = new Date();
       nextWeek.setDate(nextWeek.getDate() + 7);
       setDueDate(nextWeek.toISOString().split('T')[0]);
+      
+      // Init Payment Date 1 with Today
+      const today = new Date().toISOString().split('T')[0];
+      setPaymentDetails([
+          { amount: 0, date: today },
+          { amount: 0, date: '' },
+          { amount: 0, date: '' },
+          { amount: 0, date: '' }
+      ]);
     }
   }, [id, navigate, showToast]);
 
@@ -150,7 +179,6 @@ const InvoiceForm: React.FC = () => {
           }));
           setItems(importedItems);
           
-          // Copy Financials if needed, or recalculate
           showToast("Data diimpor dari PO " + po.poNumber, 'info');
       }
   };
@@ -178,11 +206,20 @@ const InvoiceForm: React.FC = () => {
     setItems(newItems);
   };
 
+  // --- PAYMENT HANDLING ---
+  const updatePayment = (index: number, field: keyof PaymentDetail, value: any) => {
+      if (isReadOnly) return;
+      const newPayments = [...paymentDetails];
+      (newPayments[index] as any)[field] = value;
+      setPaymentDetails(newPayments);
+  };
+
   const calculateFinancials = () => {
     const subTotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
     const grandTotal = subTotal - discount + tax;
+    const totalPaid = paymentDetails.reduce((sum, p) => sum + (p.amount || 0), 0);
     const remainingBalance = grandTotal - totalPaid;
-    return { subTotal, grandTotal, remainingBalance };
+    return { subTotal, grandTotal, totalPaid, remainingBalance };
   };
 
   const handlePercentageChange = (type: 'tax' | 'discount', percent: string) => {
@@ -208,8 +245,21 @@ const InvoiceForm: React.FC = () => {
     }
     
     setLoading(true);
-    const { subTotal, grandTotal, remainingBalance } = calculateFinancials();
+    const { subTotal, grandTotal, totalPaid, remainingBalance } = calculateFinancials();
     
+    // Auto update status based on payment
+    let currentStatus = status;
+    if (remainingBalance <= 0 && grandTotal > 0) {
+        currentStatus = InvoiceStatus.PAID;
+    } else if (totalPaid > 0 && remainingBalance > 0) {
+        currentStatus = InvoiceStatus.PARTIAL;
+    } else if (totalPaid === 0) {
+        currentStatus = InvoiceStatus.UNPAID; // Reset to Unpaid if paid cleared
+    }
+
+    // Filter payments that have amount > 0
+    const validPayments = paymentDetails.filter(p => p.amount > 0);
+
     const newInvoice: Invoice = {
       id: id || Date.now().toString(),
       invoiceNumber,
@@ -227,11 +277,12 @@ const InvoiceForm: React.FC = () => {
       grandTotal,
       totalPaid,
       remainingBalance,
+      paymentDetails: validPayments, // Save clean array
       bankName,
       accountNumber,
       accountName,
       notes,
-      status,
+      status: currentStatus,
       createdBy,
       approvedBy
     };
@@ -437,7 +488,7 @@ const InvoiceForm: React.FC = () => {
               
               {/* Calculation */}
               <div className="flex justify-end">
-                <div className="w-full md:w-[400px] bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                <div className="w-full md:w-[450px] bg-slate-50 rounded-2xl p-6 border border-slate-100">
                     <div className="flex flex-col gap-4 text-sm">
                         <div className="flex justify-between items-center text-slate-600">
                             <span className="font-medium">Subtotal</span>
@@ -480,25 +531,47 @@ const InvoiceForm: React.FC = () => {
                             <span className="font-black text-2xl text-violet-600">Rp {grandTotal.toLocaleString('id-ID')}</span>
                         </div>
 
-                        {/* NOMINAL BAYAR / DP INPUT */}
-                        <div className="flex justify-between items-center pt-2 mt-2 border-t border-slate-200">
-                            <span className="font-bold text-slate-500 uppercase text-[11px]">Uang Muka / Bayar</span>
-                            <div className="relative w-48">
-                                <div className="absolute left-3 top-2.5 text-slate-400 pointer-events-none"><Wallet size={14} /></div>
-                                <input 
-                                  type="number" 
-                                  min="0"
-                                  readOnly={isReadOnly}
-                                  className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-right focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all"
-                                  placeholder="0"
-                                  value={totalPaid}
-                                  onChange={(e) => setTotalPaid(parseInt(e.target.value) || 0)}
-                                />
+                        {/* MULTI PAYMENT SECTION */}
+                        <div className="mt-4 space-y-3">
+                            <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
+                                <Wallet size={16} className="text-violet-500" />
+                                <span className="font-bold text-xs uppercase text-slate-500">Riwayat Pembayaran (DP/Cicilan)</span>
                             </div>
+                            
+                            {paymentDetails.map((payment, index) => (
+                                <div key={index} className="flex gap-2 items-center">
+                                    <div className="w-24 shrink-0">
+                                        <label className="text-[10px] font-bold text-slate-400 block mb-1">
+                                            {index === 0 ? "Uang Muka 1" : `Pembayaran ${index + 1}`}
+                                        </label>
+                                        <div className="relative">
+                                            <input 
+                                                type="date" 
+                                                readOnly={isReadOnly}
+                                                className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-[10px] font-medium"
+                                                value={payment.date}
+                                                onChange={(e) => updatePayment(index, 'date', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="text-[10px] font-bold text-slate-400 block mb-1 text-right">Nominal</label>
+                                        <input 
+                                            type="number" 
+                                            min="0"
+                                            readOnly={isReadOnly}
+                                            className={`w-full px-3 py-1.5 bg-white border rounded-lg text-right font-bold text-sm focus:ring-2 focus:ring-violet-200 transition-all ${payment.amount > 0 ? 'border-violet-300 text-violet-700' : 'border-slate-300 text-slate-600'}`}
+                                            placeholder="0"
+                                            value={payment.amount || ''}
+                                            onChange={(e) => updatePayment(index, 'amount', parseInt(e.target.value) || 0)}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
                         {/* SISA TAGIHAN DISPLAY */}
-                        <div className="flex justify-between items-center mt-1">
+                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-200">
                             <span className="font-bold text-slate-500 uppercase text-[11px]">Sisa Tagihan</span>
                             <span className={`font-black text-xl ${remainingBalance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                                 Rp {remainingBalance.toLocaleString('id-ID')}
