@@ -197,7 +197,20 @@ const fetchFromGoogle = async (type: 'po' | 'invoice' | 'do'): Promise<{ success
       }
 
       if (result.result === 'success' && Array.isArray(result.data)) {
-          return { success: true, data: result.data };
+          // --- DEDUPLICATION LOGIC ---
+          // Google Sheets append-only nature means we might get multiple rows for the same ID (edits).
+          // We must filter to keep only the LATEST entry for each ID.
+          const dataMap = new Map();
+          result.data.forEach((item: any) => {
+              if (item.id) {
+                  // Set will overwrite previous entry, ensuring we keep the last one (latest)
+                  dataMap.set(item.id, item); 
+              }
+          });
+          const uniqueData = Array.from(dataMap.values());
+          // ---------------------------
+
+          return { success: true, data: uniqueData };
       } else {
           return { success: false, message: result.message || 'Gagal mengambil data.' };
       }
