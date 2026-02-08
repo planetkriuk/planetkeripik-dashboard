@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, FileInput, FileOutput, History, Settings, Menu, X, ChevronRight, LogOut, FileText, ListOrdered, Package, Truck } from 'lucide-react';
+import { LayoutDashboard, FileInput, FileOutput, History, Settings, Menu, X, ChevronRight, LogOut, FileText, ListOrdered, Package, Truck, StickyNote, ScrollText } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
@@ -74,21 +74,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
            </div>
         </div>
 
-        {/* INVOICE */}
+        {/* INVOICE & LABEL */}
         <div>
-           <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">INVOICE</p>
+           <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">TAGIHAN & LABEL</p>
            <div className="space-y-1">
               <NavItem name="Buat Invoice" path="/invoice/create" icon={<FileText size={20} />} />
               <NavItem name="Riwayat Invoice" path="/invoice/history" icon={<ListOrdered size={20} />} />
+              {/* MENU BARU */}
+              <NavItem name="Buat Stiker" path="/stiker/create" icon={<StickyNote size={20} />} />
+              <NavItem name="Riwayat Stiker" path="/stiker/history" icon={<ScrollText size={20} />} />
            </div>
         </div>
 
         {/* SURAT JALAN */}
         <div>
-           <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">SURAT JALAN</p>
+           <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">LOGISTIK</p>
            <div className="space-y-1">
               <NavItem name="Buat Surat Jalan" path="/surat-jalan/create" icon={<Truck size={20} />} />
               <NavItem name="Riwayat Surat Jalan" path="/surat-jalan" icon={<ListOrdered size={20} />} />
+              <NavItem name="Stok Gudang" path="/inventory" icon={<Package size={20} />} />
            </div>
         </div>
 
