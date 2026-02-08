@@ -10,7 +10,7 @@ import InvoiceForm from './components/InvoiceForm';
 import { InvoiceHistory } from './components/InvoiceHistory';
 import DeliveryOrderForm from './components/DeliveryOrderForm';
 import DeliveryOrderHistory from './components/DeliveryOrderHistory';
-import Inventory from './components/Inventory';
+// Inventory import removed
 import StickerForm from './components/StickerForm';
 import StickerHistory from './components/StickerHistory';
 
@@ -123,7 +123,6 @@ const App: React.FC = () => {
             <Route path="/surat-jalan" element={<DeliveryOrderHistory />} />
             <Route path="/surat-jalan/create" element={<DeliveryOrderForm />} />
             <Route path="/surat-jalan/edit/:id" element={<DeliveryOrderForm />} />
-            <Route path="/inventory" element={<Inventory />} />
             
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
