@@ -99,6 +99,11 @@ export interface PurchaseOrder {
   isSyncedToCalendar: boolean;
 }
 
+export interface PaymentDetail {
+  amount: number;
+  date: string;
+}
+
 export interface Invoice {
   id: string;
   invoiceNumber: string; // e.g., INV/2023/001
@@ -122,8 +127,11 @@ export interface Invoice {
   discount: number;
   tax: number;
   grandTotal: number;
-  totalPaid?: number;
-  remainingBalance?: number;
+  
+  // Payment Tracking
+  totalPaid?: number; // Calculated Sum
+  remainingBalance?: number; // Calculated Remainder
+  paymentDetails?: PaymentDetail[]; // Array of payments (DP1, DP2, etc)
   
   // Payment Info
   bankName: string;
