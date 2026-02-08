@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { generateInvoiceNumber, saveInvoice, getInvoices, getInvoiceById, getPOs, getAppSettings } from '../services/storage';
 import { submitInvoiceToGoogle } from '../services/googleSheetService';
 import { Invoice, InvoiceStatus, POItem, POType, POStatus } from '../types';
-import { Plus, Trash2, Save, Calendar, User, Package, ArrowLeft, Loader2, Lock, Percent, CreditCard, FileText } from 'lucide-react';
+import { Plus, Trash2, Save, Calendar, User, Package, ArrowLeft, Loader2, Lock, Percent, CreditCard, FileText, Wallet } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from './Toast';
 
@@ -42,6 +42,9 @@ const InvoiceForm: React.FC = () => {
   const [tax, setTax] = useState(0);
   const [discountPercent, setDiscountPercent] = useState<string>('');
   const [taxPercent, setTaxPercent] = useState<string>('');
+
+  // New DP / Payment State
+  const [totalPaid, setTotalPaid] = useState(0);
 
   const [notes, setNotes] = useState('');
   
@@ -93,6 +96,7 @@ const InvoiceForm: React.FC = () => {
         setTax(inv.tax);
         setNotes(inv.notes || '');
         setStatus(inv.status);
+        setTotalPaid(inv.totalPaid || 0);
         
         setBankName(inv.bankName);
         setAccountNumber(inv.accountNumber);
@@ -170,7 +174,8 @@ const InvoiceForm: React.FC = () => {
   const calculateFinancials = () => {
     const subTotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
     const grandTotal = subTotal - discount + tax;
-    return { subTotal, grandTotal };
+    const remainingBalance = grandTotal - totalPaid;
+    return { subTotal, grandTotal, remainingBalance };
   };
 
   const handlePercentageChange = (type: 'tax' | 'discount', percent: string) => {
@@ -196,7 +201,7 @@ const InvoiceForm: React.FC = () => {
     }
     
     setLoading(true);
-    const { subTotal, grandTotal } = calculateFinancials();
+    const { subTotal, grandTotal, remainingBalance } = calculateFinancials();
     
     const newInvoice: Invoice = {
       id: id || Date.now().toString(),
@@ -213,6 +218,8 @@ const InvoiceForm: React.FC = () => {
       discount,
       tax,
       grandTotal,
+      totalPaid,
+      remainingBalance,
       bankName,
       accountNumber,
       accountName,
@@ -248,6 +255,8 @@ const InvoiceForm: React.FC = () => {
       <h3 className="font-bold text-lg">{title}</h3>
     </div>
   );
+
+  const { subTotal, grandTotal, remainingBalance } = calculateFinancials();
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-24 md:pb-20">
@@ -458,7 +467,7 @@ const InvoiceForm: React.FC = () => {
                     <div className="flex flex-col gap-4 text-sm">
                         <div className="flex justify-between items-center text-slate-600">
                             <span className="font-medium">Subtotal</span>
-                            <span className="font-bold text-base">Rp {calculateFinancials().subTotal.toLocaleString('id-ID')}</span>
+                            <span className="font-bold text-base">Rp {subTotal.toLocaleString('id-ID')}</span>
                         </div>
                         
                         <div className="flex justify-between items-center text-slate-600">
@@ -494,7 +503,32 @@ const InvoiceForm: React.FC = () => {
                         <div className="w-full h-[1px] bg-slate-200 my-2"></div>
                         <div className="flex justify-between items-center text-slate-900">
                             <span className="font-extrabold text-lg uppercase">Total Tagihan</span>
-                            <span className="font-black text-2xl text-violet-600">Rp {calculateFinancials().grandTotal.toLocaleString('id-ID')}</span>
+                            <span className="font-black text-2xl text-violet-600">Rp {grandTotal.toLocaleString('id-ID')}</span>
+                        </div>
+
+                        {/* NOMINAL BAYAR / DP INPUT */}
+                        <div className="flex justify-between items-center pt-2 mt-2 border-t border-slate-200">
+                            <span className="font-bold text-slate-500 uppercase text-[11px]">Uang Muka / Bayar</span>
+                            <div className="relative w-48">
+                                <div className="absolute left-3 top-2.5 text-slate-400 pointer-events-none"><Wallet size={14} /></div>
+                                <input 
+                                  type="number" 
+                                  min="0"
+                                  readOnly={isReadOnly}
+                                  className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-right focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all"
+                                  placeholder="0"
+                                  value={totalPaid}
+                                  onChange={(e) => setTotalPaid(parseInt(e.target.value) || 0)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* SISA TAGIHAN DISPLAY */}
+                        <div className="flex justify-between items-center mt-1">
+                            <span className="font-bold text-slate-500 uppercase text-[11px]">Sisa Tagihan</span>
+                            <span className={`font-black text-xl ${remainingBalance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                Rp {remainingBalance.toLocaleString('id-ID')}
+                            </span>
                         </div>
                     </div>
                 </div>
