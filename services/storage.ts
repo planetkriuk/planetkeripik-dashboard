@@ -134,40 +134,6 @@ export const generatePONumber = (type: POType): string => {
   return newPO;
 };
 
-export const getInventorySummary = () => {
-  const pos = getPOs();
-  const summary: Record<string, { name: string, specification: string, totalIn: number, totalOut: number, remaining: number }> = {};
-
-  pos.forEach(po => {
-    if (po.status === POStatus.CANCELLED) return;
-
-    po.items.forEach(item => {
-      const key = `${item.name.toLowerCase().trim()}-${item.specification.toLowerCase().trim()}`;
-      
-      if (!summary[key]) {
-        summary[key] = {
-          name: item.name,
-          specification: item.specification,
-          totalIn: 0,
-          totalOut: 0,
-          remaining: 0
-        };
-      }
-
-      if (po.type === POType.INCOMING) {
-        summary[key].totalIn += item.quantity;
-      } else if (po.type === POType.OUTGOING) {
-        summary[key].totalOut += item.quantity;
-      }
-    });
-  });
-
-  return Object.values(summary).map(item => ({
-    ...item,
-    remaining: item.totalIn - item.totalOut
-  }));
-};
-
 // --- INVOICE FUNCTIONS ---
 
 export const getInvoices = (): Invoice[] => {
@@ -311,4 +277,43 @@ export const deleteShippingLabel = (id: string): void => {
   const labels = getShippingLabels();
   const newLabels = labels.filter(l => l.id !== id);
   localStorage.setItem(LABEL_STORAGE_KEY, JSON.stringify(newLabels));
+};
+
+// --- INVENTORY FUNCTIONS ---
+
+export const getInventorySummary = () => {
+  const pos = getPOs();
+  const inventoryMap = new Map<string, { name: string, specification: string, totalIn: number, totalOut: number }>();
+
+  pos.forEach(po => {
+    // Only process Approved/Completed/Pending. Skip Draft/Cancelled.
+    if (po.status === POStatus.CANCELLED || po.status === POStatus.DRAFT) return;
+
+    po.items.forEach(item => {
+      // Normalize key
+      const key = `${item.name.trim()}|${(item.specification || '').trim()}`.toLowerCase();
+      
+      if (!inventoryMap.has(key)) {
+        inventoryMap.set(key, {
+          name: item.name,
+          specification: item.specification || '',
+          totalIn: 0,
+          totalOut: 0
+        });
+      }
+
+      const entry = inventoryMap.get(key)!;
+      
+      if (po.type === POType.INCOMING) {
+        entry.totalIn += item.quantity;
+      } else if (po.type === POType.OUTGOING) {
+        entry.totalOut += item.quantity;
+      }
+    });
+  });
+
+  return Array.from(inventoryMap.values()).map(item => ({
+    ...item,
+    remaining: item.totalIn - item.totalOut
+  }));
 };
