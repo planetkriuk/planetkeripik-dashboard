@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { generateDONumber, saveDeliveryOrder, getDeliveryOrderById, getPOs, getInvoices } from '../services/storage';
 import { submitDeliveryOrderToGoogle } from '../services/googleSheetService';
 import { DeliveryOrder, DeliveryStatus, DOItem, POType, InvoiceStatus } from '../types';
-import { Plus, Trash2, Save, Calendar, User, Truck, ArrowLeft, Loader2, FileText, MapPin } from 'lucide-react';
+import { Plus, Trash2, Save, Calendar, User, Truck, ArrowLeft, Loader2, FileText, MapPin, ChevronDown, Package } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from './Toast';
 
@@ -19,6 +19,8 @@ const DeliveryOrderForm: React.FC = () => {
   // Suggestions
   const [availablePOs, setAvailablePOs] = useState<{id: string, no: string, name: string}[]>([]);
   const [availableInvoices, setAvailableInvoices] = useState<{id: string, no: string, name: string}[]>([]);
+  const [productSuggestions, setProductSuggestions] = useState<string[]>([]);
+  const [specSuggestions, setSpecSuggestions] = useState<string[]>([]);
 
   // Form State
   const [customerName, setCustomerName] = useState('');
@@ -34,11 +36,19 @@ const DeliveryOrderForm: React.FC = () => {
   const [status, setStatus] = useState<DeliveryStatus>(DeliveryStatus.PREPARING);
   const [notes, setNotes] = useState('');
   
-  const [items, setItems] = useState<DOItem[]>([{ id: Date.now().toString(), name: '', specification: '', quantity: 1 }]);
+  const [items, setItems] = useState<DOItem[]>([{ id: Date.now().toString(), name: '', specification: '', quantity: 1, unit: 'Pcs', notes: '' }]);
+
+  const UNIT_OPTIONS = ['Pcs', 'Dus', 'Bal', 'Pack', 'Kg', 'Lusin', 'Karton', 'Sak'];
 
   useEffect(() => {
     // Load POs
     const allPos = getPOs();
+    
+    // Populate Suggestions
+    const allItems = allPos.flatMap(p => p.items);
+    setProductSuggestions(Array.from(new Set(allItems.map(i => i.name).filter(Boolean))));
+    setSpecSuggestions(Array.from(new Set(allItems.map(i => i.specification).filter(Boolean))));
+
     setAvailablePOs(allPos
       .filter(p => p.type === POType.OUTGOING)
       .map(p => ({ id: p.id, no: p.poNumber, name: p.customerName }))
@@ -64,7 +74,11 @@ const DeliveryOrderForm: React.FC = () => {
         setDriverName(data.driverName);
         setLicensePlate(data.licensePlate);
         setWarehouseStaff(data.warehouseStaff);
-        setItems(data.items);
+        
+        // Ensure unit exists
+        const patchedItems = data.items.map(i => ({...i, unit: i.unit || 'Pcs'}));
+        setItems(patchedItems);
+        
         setNotes(data.notes || '');
         setStatus(data.status);
       } else {
@@ -94,6 +108,7 @@ const DeliveryOrderForm: React.FC = () => {
               name: item.name,
               specification: item.specification,
               quantity: item.quantity,
+              unit: item.unit || 'Pcs',
               notes: ''
           }));
           setItems(importedItems);
@@ -108,19 +123,18 @@ const DeliveryOrderForm: React.FC = () => {
 
     const inv = getInvoices().find(i => i.id === invId);
     if (inv) {
-        // Jika Invoice punya referensi PO, gunakan itu. Jika tidak, kosongkan atau isi manual.
         setRefPONumber(inv.refPONumber || ''); 
         setCustomerName(inv.customerName);
         setAddress(inv.address);
         setContactName(inv.contactName || '');
         setContactPhone(inv.contactPhone || '');
 
-        // Import Items
         const importedItems = inv.items.map(item => ({
             id: Date.now().toString() + Math.random(),
             name: item.name,
             specification: item.specification,
             quantity: item.quantity,
+            unit: item.unit || 'Pcs',
             notes: ''
         }));
         setItems(importedItems);
@@ -137,7 +151,7 @@ const DeliveryOrderForm: React.FC = () => {
   };
 
   const addItem = () => {
-    setItems([...items, { id: Date.now().toString(), name: '', specification: '', quantity: 1, notes: '' }]);
+    setItems([...items, { id: Date.now().toString(), name: '', specification: '', quantity: 1, unit: 'Pcs', notes: '' }]);
   };
 
   const removeItem = (index: number) => {
@@ -200,7 +214,9 @@ const DeliveryOrderForm: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-24 md:pb-20">
-      
+      <datalist id="product-list">{productSuggestions.map((prod, i) => <option key={i} value={prod} />)}</datalist>
+      <datalist id="spec-list">{specSuggestions.map((spec, i) => <option key={i} value={spec} />)}</datalist>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 bg-[#F6F8FC] z-30 py-4 border-b border-slate-200/50 -mx-4 px-4 md:-mx-8 md:px-8 shadow-sm">
         <div className="flex items-center gap-4">
@@ -328,7 +344,7 @@ const DeliveryOrderForm: React.FC = () => {
                  </button>
                </div>
               
-              {/* VERTICAL LIST / CARD VIEW */}
+              {/* VERTICAL LIST / CARD VIEW - MATCHING INVOICE/PO STYLE */}
               <div className="space-y-6 mb-8">
                   {items.map((item, index) => (
                       <div key={item.id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 relative shadow-sm hover:shadow-md transition-shadow">
@@ -336,31 +352,53 @@ const DeliveryOrderForm: React.FC = () => {
                              <Trash2 size={18} />
                           </button>
                           
-                          {/* Nama Barang */}
+                          {/* 1. Nama Barang */}
                           <div className="mb-4">
                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Nama Barang</label>
-                             <input type="text" required placeholder="Contoh: Keripik Singkong" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-900" value={item.name} onChange={e => updateItem(index, 'name', e.target.value)} />
+                             <input type="text" required list="product-list" 
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
+                                value={item.name} onChange={e => updateItem(index, 'name', e.target.value)} placeholder="Contoh: Keripik Singkong" />
                           </div>
 
-                          {/* Varian / Spec */}
+                          {/* 2. Spesifikasi */}
                           <div className="mb-4">
                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Varian / Spec</label>
-                             <input type="text" placeholder="Contoh: Balado 200g" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-900" value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} />
+                             <input type="text" list="spec-list" 
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:border-amber-500 font-medium transition-all"
+                                value={item.specification} onChange={e => updateItem(index, 'specification', e.target.value)} placeholder="Contoh: Balado 200g" />
                           </div>
 
-                          {/* Qty */}
+                          {/* 3. Jumlah (Qty) & Satuan - SPLIT INPUT (NEW) */}
                           <div className="mb-4">
-                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Jumlah (Qty)</label>
-                             <input type="number" className="w-32 px-4 py-3 rounded-xl border border-slate-200 text-lg text-center font-bold text-slate-900" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value))} />
+                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Jumlah (Qty) & Satuan</label>
+                             <div className="flex gap-2">
+                               <input type="number" min="1" required
+                                  className="w-1/2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-center font-bold text-lg focus:border-amber-500 transition-all"
+                                  value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 0)} />
+                               <div className="w-1/2 relative">
+                                  <select 
+                                     className="w-full h-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold appearance-none focus:border-amber-500 cursor-pointer"
+                                     value={item.unit || 'Pcs'} onChange={e => updateItem(index, 'unit', e.target.value)}
+                                  >
+                                     {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                  </select>
+                                  <ChevronDown className="absolute right-3 top-4 text-slate-400 pointer-events-none" size={16}/>
+                               </div>
+                             </div>
                           </div>
 
-                          {/* Keterangan */}
+                          {/* 4. Keterangan / Kondisi */}
                           <div>
                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Keterangan / Kondisi</label>
-                             <input type="text" placeholder="Contoh: Dus Penyok, Segel Aman..." className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm" value={item.notes} onChange={e => updateItem(index, 'notes', e.target.value)} />
+                             <input type="text" placeholder="Contoh: Dus Penyok, Segel Aman..." 
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:border-amber-500 font-medium transition-all"
+                                value={item.notes} onChange={e => updateItem(index, 'notes', e.target.value)} />
                           </div>
                       </div>
                   ))}
+                  <button type="button" onClick={addItem} className="w-full py-4 rounded-xl border-2 border-dashed border-slate-300 text-slate-500 font-bold hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50 transition-colors flex items-center justify-center gap-2">
+                      <Plus size={18} /> Tambah Item Lain
+                  </button>
               </div>
             </div>
           </div>
