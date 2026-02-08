@@ -360,15 +360,30 @@ export const InvoiceHistory: React.FC = () => {
                                     <span className="font-black text-slate-900 text-2xl">{selectedInvoice.grandTotal.toLocaleString('id-ID')}</span>
                                 </div>
                                 
-                                {/* PARTIAL PAYMENT INFO IF ANY */}
-                                {(selectedInvoice.totalPaid || 0) > 0 && selectedInvoice.status !== InvoiceStatus.PAID && (
-                                    <div className="mt-3 flex justify-between items-center px-4">
-                                        <span className="text-sm font-bold text-emerald-600">Sudah Dibayar</span>
-                                        <span className="text-sm font-bold text-emerald-600">- {(selectedInvoice.totalPaid || 0).toLocaleString('id-ID')}</span>
-                                    </div>
-                                )}
+                                {/* PAYMENT BREAKDOWN */}
+                                <div className="mt-4 space-y-2">
+                                    {selectedInvoice.paymentDetails && selectedInvoice.paymentDetails.length > 0 ? (
+                                        selectedInvoice.paymentDetails.filter(p => p.amount > 0).map((payment, idx) => (
+                                            <div key={idx} className="flex justify-between items-center px-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-emerald-600">
+                                                        {idx === 0 ? "Uang Muka 1" : `Pembayaran ${idx + 1}`}
+                                                    </span>
+                                                    {payment.date && <span className="text-[10px] text-emerald-500 font-medium">{new Date(payment.date).toLocaleDateString('id-ID')}</span>}
+                                                </div>
+                                                <span className="text-sm font-bold text-emerald-600">- {payment.amount.toLocaleString('id-ID')}</span>
+                                            </div>
+                                        ))
+                                    ) : (selectedInvoice.totalPaid || 0) > 0 && selectedInvoice.status !== InvoiceStatus.PAID && (
+                                        <div className="flex justify-between items-center px-4">
+                                            <span className="text-sm font-bold text-emerald-600">Sudah Dibayar</span>
+                                            <span className="text-sm font-bold text-emerald-600">- {(selectedInvoice.totalPaid || 0).toLocaleString('id-ID')}</span>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {(selectedInvoice.remainingBalance || 0) > 0 && (
-                                     <div className="mt-1 flex justify-between items-center px-4">
+                                     <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center px-4">
                                         <span className="text-sm font-bold text-red-600 uppercase">Sisa Tagihan</span>
                                         <span className="text-base font-black text-red-600">{(selectedInvoice.remainingBalance || 0).toLocaleString('id-ID')}</span>
                                     </div>
