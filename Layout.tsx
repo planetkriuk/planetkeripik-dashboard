@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { LayoutDashboard, FileInput, FileOutput, History, Settings, Menu, X, ChevronRight, LogOut, FileText, ListOrdered, Package, Truck, StickyNote, ScrollText } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -34,7 +33,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <span className={`transition-colors duration-300 ${active ? 'text-amber-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
             {icon}
           </span>
-          {item.name}
+          {name}
         </div>
         {active && <ChevronRight size={16} className="text-amber-500 animate-pulse" />}
       </Link>
