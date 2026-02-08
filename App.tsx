@@ -10,6 +10,10 @@ import InvoiceForm from './components/InvoiceForm';
 import { InvoiceHistory } from './components/InvoiceHistory';
 import DeliveryOrderForm from './components/DeliveryOrderForm';
 import DeliveryOrderHistory from './components/DeliveryOrderHistory';
+import Inventory from './components/Inventory';
+import StickerForm from './components/StickerForm';
+import StickerHistory from './components/StickerHistory';
+
 import { ToastProvider } from './components/Toast';
 import NotificationManager from './components/NotificationManager';
 import { POType } from './types';
@@ -105,6 +109,10 @@ const App: React.FC = () => {
             <Route path="/invoice/edit/:id" element={<InvoiceForm />} />
             <Route path="/invoice/history" element={<InvoiceHistory />} />
 
+            {/* Sticker Routes */}
+            <Route path="/stiker/create" element={<StickerForm />} />
+            <Route path="/stiker/history" element={<StickerHistory />} />
+
             {/* PO Routes */}
             <Route path="/po-masuk" element={<POForm defaultType={POType.INCOMING} />} />
             <Route path="/po-keluar" element={<POForm defaultType={POType.OUTGOING} />} />
@@ -115,6 +123,7 @@ const App: React.FC = () => {
             <Route path="/surat-jalan" element={<DeliveryOrderHistory />} />
             <Route path="/surat-jalan/create" element={<DeliveryOrderForm />} />
             <Route path="/surat-jalan/edit/:id" element={<DeliveryOrderForm />} />
+            <Route path="/inventory" element={<Inventory />} />
             
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
