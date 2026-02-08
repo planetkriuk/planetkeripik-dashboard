@@ -142,13 +142,26 @@ export const InvoiceHistory: React.FC = () => {
 
   const getStatusBadge = (status: InvoiceStatus) => {
     let classes = '';
+    let label = status as string;
+
     switch(status) {
-      case InvoiceStatus.PAID: classes = 'bg-emerald-100 text-emerald-700 border border-emerald-200'; break;
-      case InvoiceStatus.PARTIAL: classes = 'bg-blue-100 text-blue-700 border border-blue-200'; break;
-      case InvoiceStatus.OVERDUE: classes = 'bg-red-50 text-red-600 border border-red-100'; break;
-      default: classes = 'bg-amber-100 text-amber-700 border border-amber-200';
+      case InvoiceStatus.PAID: 
+        classes = 'bg-emerald-100 text-emerald-700 border border-emerald-200'; 
+        break;
+      case InvoiceStatus.PARTIAL: 
+        classes = 'bg-amber-100 text-amber-700 border border-amber-200'; // Warnanya disamakan dengan amber/kuning
+        label = 'BELUM LUNAS'; // Paksa label menjadi Belum Lunas
+        break;
+      case InvoiceStatus.UNPAID:
+        classes = 'bg-amber-100 text-amber-700 border border-amber-200';
+        break;
+      case InvoiceStatus.OVERDUE: 
+        classes = 'bg-red-50 text-red-600 border border-red-100'; 
+        break;
+      default: 
+        classes = 'bg-slate-100 text-slate-600 border border-slate-200';
     }
-    return <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${classes}`}>{status}</span>;
+    return <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${classes}`}>{label}</span>;
   };
 
   return (
@@ -294,11 +307,12 @@ export const InvoiceHistory: React.FC = () => {
                                 <span className={`px-6 py-2 rounded-full text-base font-bold uppercase tracking-widest ${
                                     selectedInvoice.status === InvoiceStatus.PAID 
                                     ? 'bg-emerald-100 text-emerald-600' 
-                                    : selectedInvoice.status === InvoiceStatus.PARTIAL 
-                                    ? 'bg-blue-100 text-blue-600'
+                                    : (selectedInvoice.status === InvoiceStatus.PARTIAL || selectedInvoice.status === InvoiceStatus.UNPAID)
+                                    ? 'bg-amber-100 text-amber-600'
                                     : 'bg-slate-100 text-slate-500'
                                 }`}>
-                                    {selectedInvoice.status === InvoiceStatus.PAID ? 'LUNAS' : selectedInvoice.status}
+                                    {selectedInvoice.status === InvoiceStatus.PAID ? 'LUNAS' : 
+                                     (selectedInvoice.status === InvoiceStatus.PARTIAL ? 'BELUM LUNAS' : selectedInvoice.status)}
                                 </span>
                             </div>
 
