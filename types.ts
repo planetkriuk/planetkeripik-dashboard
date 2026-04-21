@@ -190,3 +190,13 @@ export interface DashboardStats {
   revenuePotential: number; // Sum of Incoming
   pendingDeadlines: number;
 }
+
+export interface PriceListItem {
+  id: string;
+  itemName: string;
+  packagingContent: string; // e.g., 10 kg, 8 kg
+  priceTier1: number; // 1-50 Kg
+  priceTier2: number; // 51-290 Kg
+  priceTier3: number; // 300 Kg up
+  lastUpdated: string;
+}
