@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, FileInput, FileOutput, History, Settings, Menu, X, ChevronRight, LogOut, FileText, ListOrdered, Package, Truck, StickyNote, ScrollText } from 'lucide-react';
+import { LayoutDashboard, FileInput, FileOutput, History, Settings, Menu, X, ChevronRight, LogOut, FileText, ListOrdered, Truck, StickyNote, ScrollText, BadgeDollarSign } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
@@ -63,6 +63,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
            <NavItem name="Dashboard" path="/" icon={<LayoutDashboard size={20} />} />
         </div>
 
+        {/* PRICE LIST */}
+        <div>
+           <NavItem name="Price List" path="/price-list" icon={<BadgeDollarSign size={20} />} />
+        </div>
+
         {/* SURAT PO */}
         <div>
            <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">SURAT PO</p>
@@ -91,7 +96,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
            <div className="space-y-1">
               <NavItem name="Buat Surat Jalan" path="/surat-jalan/create" icon={<Truck size={20} />} />
               <NavItem name="Riwayat Surat Jalan" path="/surat-jalan" icon={<ListOrdered size={20} />} />
-              <NavItem name="Stok Gudang" path="/inventory" icon={<Package size={20} />} />
            </div>
         </div>
 
