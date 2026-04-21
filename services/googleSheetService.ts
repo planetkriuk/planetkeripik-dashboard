@@ -1,5 +1,5 @@
 
-import { PurchaseOrder, Invoice, DeliveryOrder } from '../types';
+import { PurchaseOrder, Invoice, DeliveryOrder, PriceListItem } from '../types';
 
 // ============================================================================
 // PENTING: GANTI URL DI BAWAH INI DENGAN URL DEPLOYMENT BARU ANDA
@@ -29,33 +29,33 @@ export const syncCalendarToCloud = async (po: PurchaseOrder): Promise<{ success:
     });
 
     if (response.ok) {
-        const textResult = await response.text();
-        try {
-            const json = JSON.parse(textResult);
-            if (json.result === 'success') {
-                return { success: true, message: json.message || 'Jadwal Otomatis Terpasang!' };
-            } else {
-                const msg = json.message ? json.message.toLowerCase() : '';
-                if (msg.includes('action unknown')) return { success: false, message: 'Apps Script belum di-update!' };
-                return { success: false, message: json.message || 'Gagal sinkronisasi kalender.' };
-            }
-        } catch (e) {
-            return { success: true, message: 'Perintah dikirim ke server.' };
+      const textResult = await response.text();
+      try {
+        const json = JSON.parse(textResult);
+        if (json.result === 'success') {
+          return { success: true, message: json.message || 'Jadwal Otomatis Terpasang!' };
+        } else {
+          const msg = json.message ? json.message.toLowerCase() : '';
+          if (msg.includes('action unknown')) return { success: false, message: 'Apps Script belum di-update!' };
+          return { success: false, message: json.message || 'Gagal sinkronisasi kalender.' };
         }
+      } catch (e) {
+        return { success: true, message: 'Perintah dikirim ke server.' };
+      }
     }
     return { success: false, message: 'Server tidak merespon.' };
   } catch (error) {
     try {
-        await fetch(scriptUrl, {
-            method: 'POST',
-            body: payload,
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            redirect: 'follow',
-        });
-        return { success: true, message: 'Request dikirim (Mode Kompatibilitas).' };
+      await fetch(scriptUrl, {
+        method: 'POST',
+        body: payload,
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        redirect: 'follow',
+      });
+      return { success: true, message: 'Request dikirim (Mode Kompatibilitas).' };
     } catch (e) {
-        return { success: false, message: 'Gagal koneksi internet.' };
+      return { success: false, message: 'Gagal koneksi internet.' };
     }
   }
 };
@@ -102,16 +102,30 @@ export const deleteDeliveryOrderFromGoogle = async (id: string): Promise<{ succe
   return sendDeleteToGoogle('delete_do', id);
 };
 
+// --- PRICELIST FUNCTIONS ---
+
+export const submitPriceListToGoogle = async (item: PriceListItem): Promise<{ success: boolean; message: string }> => {
+  return sendToGoogle('create_pricelist', item);
+};
+
+export const fetchPriceListFromGoogle = async (): Promise<{ success: boolean; data?: PriceListItem[]; message?: string }> => {
+  return fetchFromGoogle('pricelist');
+};
+
+export const deletePriceListFromGoogle = async (id: string): Promise<{ success: boolean; message: string }> => {
+  return sendDeleteToGoogle('delete_pricelist', id);
+};
+
 // --- GENERIC HELPERS ---
 
 const sendToGoogle = async (action: string, data: any): Promise<{ success: boolean; message: string }> => {
   const scriptUrl = getScriptUrl();
   try {
     const payload = JSON.stringify({ action, data });
-    
+
     // Fallback if file too large (Apps Script limit is ~10MB payload usually, safer at 9MB)
     if (payload.length > 9 * 1024 * 1024) {
-        return { success: false, message: 'Gagal: Ukuran data terlalu besar.' };
+      return { success: false, message: 'Gagal: Ukuran data terlalu besar.' };
     }
 
     try {
@@ -125,16 +139,16 @@ const sendToGoogle = async (action: string, data: any): Promise<{ success: boole
       if (response.ok) {
         const textResult = await response.text();
         try {
-            const json = JSON.parse(textResult);
-            if (json.result === 'success') {
-                return { success: true, message: 'Data tersimpan di Cloud.' };
-            }
+          const json = JSON.parse(textResult);
+          if (json.result === 'success') {
+            return { success: true, message: 'Data tersimpan di Cloud.' };
+          }
         } catch (e) {
-            return { success: true, message: 'Data terkirim (Respon Server OK).' };
+          return { success: true, message: 'Data terkirim (Respon Server OK).' };
         }
       }
     } catch (primaryError) {
-      throw primaryError; 
+      throw primaryError;
     }
     return { success: false, message: 'Gagal memproses respons server.' };
   } catch (error) {
@@ -142,11 +156,11 @@ const sendToGoogle = async (action: string, data: any): Promise<{ success: boole
       // Fallback no-cors
       const payloadFallback = JSON.stringify({ action, data });
       await fetch(scriptUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: payloadFallback,
-          headers: { 'Content-Type': 'text/plain' },
-          redirect: 'follow',
+        method: 'POST',
+        mode: 'no-cors',
+        body: payloadFallback,
+        headers: { 'Content-Type': 'text/plain' },
+        redirect: 'follow',
       });
       return { success: true, message: 'Data terkirim (Mode Kompatibilitas).' };
     } catch (fallbackError) {
@@ -156,74 +170,74 @@ const sendToGoogle = async (action: string, data: any): Promise<{ success: boole
 };
 
 const sendDeleteToGoogle = async (action: string, id: string): Promise<{ success: boolean; message: string }> => {
-    const scriptUrl = getScriptUrl();
-    const payload = JSON.stringify({ action, id });
+  const scriptUrl = getScriptUrl();
+  const payload = JSON.stringify({ action, id });
 
-    try {
-        await fetch(scriptUrl, {
-            method: 'POST',
-            body: payload,
-            headers: { 'Content-Type': 'text/plain' },
-            mode: 'no-cors',
-            redirect: 'follow',
-        });
-        return { success: true, message: 'Perintah hapus dikirim.' };
-    } catch (error) {
-        return { success: false, message: 'Gagal menghapus di server.' };
-    }
+  try {
+    await fetch(scriptUrl, {
+      method: 'POST',
+      body: payload,
+      headers: { 'Content-Type': 'text/plain' },
+      mode: 'no-cors',
+      redirect: 'follow',
+    });
+    return { success: true, message: 'Perintah hapus dikirim.' };
+  } catch (error) {
+    return { success: false, message: 'Gagal menghapus di server.' };
+  }
 };
 
-const fetchFromGoogle = async (type: 'po' | 'invoice' | 'do'): Promise<{ success: boolean; data?: any[]; message?: string }> => {
+const fetchFromGoogle = async (type: 'po' | 'invoice' | 'do' | 'pricelist'): Promise<{ success: boolean; data?: any[]; message?: string }> => {
   const scriptUrl = getScriptUrl();
   const maxRetries = 3;
-  
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       // Add type parameter to distinguish between PO and Invoice and DO
-      const url = `${scriptUrl}?action=read&type=${type}&_t=${Date.now()}`; 
+      const url = `${scriptUrl}?action=read&type=${type}&_t=${Date.now()}`;
       const response = await fetch(url, { method: 'GET', redirect: 'follow' });
-      
+
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
       const textResult = await response.text();
       let result;
       try {
-          result = JSON.parse(textResult);
+        result = JSON.parse(textResult);
       } catch (e) {
-          if (textResult.includes("<!DOCTYPE html>")) {
-             throw new Error("Server Script Error");
-          }
-          throw new Error("Invalid JSON format");
+        if (textResult.includes("<!DOCTYPE html>")) {
+          throw new Error("Server Script Error");
+        }
+        throw new Error("Invalid JSON format");
       }
 
       if (result.result === 'success' && Array.isArray(result.data)) {
-          // --- DEDUPLICATION LOGIC ---
-          // Google Sheets append-only nature means we might get multiple rows for the same ID (edits).
-          // We must filter to keep only the LATEST entry for each ID.
-          const dataMap = new Map();
-          result.data.forEach((item: any) => {
-              if (item.id) {
-                  // Set will overwrite previous entry, ensuring we keep the last one (latest)
-                  dataMap.set(item.id, item); 
-              }
-          });
-          const uniqueData = Array.from(dataMap.values());
-          // ---------------------------
+        // --- DEDUPLICATION LOGIC ---
+        // Google Sheets append-only nature means we might get multiple rows for the same ID (edits).
+        // We must filter to keep only the LATEST entry for each ID.
+        const dataMap = new Map();
+        result.data.forEach((item: any) => {
+          if (item.id) {
+            // Set will overwrite previous entry, ensuring we keep the last one (latest)
+            dataMap.set(item.id, item);
+          }
+        });
+        const uniqueData = Array.from(dataMap.values());
+        // ---------------------------
 
-          return { success: true, data: uniqueData };
+        return { success: true, data: uniqueData };
       } else {
-          return { success: false, message: result.message || 'Gagal mengambil data.' };
+        return { success: false, message: result.message || 'Gagal mengambil data.' };
       }
     } catch (error) {
-        console.error(`Sync Attempt ${attempt + 1} Failed:`, error);
-        if (attempt === maxRetries - 1) {
-             let msg = 'Gagal mengambil data dari Cloud.';
-             if (error instanceof Error && error.message.includes("Failed to fetch")) {
-                 msg = 'Koneksi gagal. Cek Internet.';
-             }
-             return { success: false, message: msg };
+      console.error(`Sync Attempt ${attempt + 1} Failed:`, error);
+      if (attempt === maxRetries - 1) {
+        let msg = 'Gagal mengambil data dari Cloud.';
+        if (error instanceof Error && error.message.includes("Failed to fetch")) {
+          msg = 'Koneksi gagal. Cek Internet.';
         }
-        await wait(1500);
+        return { success: false, message: msg };
+      }
+      await wait(1500);
     }
   }
   return { success: false, message: 'Unknown error.' };
