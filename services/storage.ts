@@ -1,10 +1,11 @@
 
-import { PurchaseOrder, POType, POStatus, POItem, Invoice, InvoiceStatus, DeliveryOrder, DeliveryStatus, AppSettings, ShippingLabel } from '../types';
+import { PurchaseOrder, POType, POStatus, POItem, Invoice, InvoiceStatus, DeliveryOrder, DeliveryStatus, AppSettings, ShippingLabel, PriceListItem } from '../types';
 
 const STORAGE_KEY = 'planet_keripik_pos';
 const INVOICE_STORAGE_KEY = 'planet_keripik_invoices';
 const DO_STORAGE_KEY = 'planet_keripik_dos';
 const LABEL_STORAGE_KEY = 'planet_keripik_labels';
+const PRICELIST_STORAGE_KEY = 'planet_keripik_pricelist';
 const SETTINGS_KEY = 'planet_keripik_settings';
 
 // CLEAN STATE: Tidak ada data dummy awal. Data akan diambil dari LocalStorage atau Google Sheets.
@@ -12,6 +13,7 @@ const INITIAL_DATA: PurchaseOrder[] = [];
 const INITIAL_INVOICES: Invoice[] = [];
 const INITIAL_DOS: DeliveryOrder[] = [];
 const INITIAL_LABELS: ShippingLabel[] = [];
+const INITIAL_PRICELIST: PriceListItem[] = [];
 
 const INITIAL_SETTINGS: AppSettings = {
   defaultAdminName: 'Admin Staff',
@@ -44,6 +46,7 @@ export const getAllDataJSON = () => {
     invoices: getInvoices(),
     deliveryOrders: getDeliveryOrders(),
     shippingLabels: getShippingLabels(),
+    priceList: getPriceList(),
     settings: getAppSettings(),
     timestamp: new Date().toISOString()
   });
@@ -56,6 +59,7 @@ export const restoreDataJSON = (jsonString: string): boolean => {
     if (data.invoices) localStorage.setItem(INVOICE_STORAGE_KEY, JSON.stringify(data.invoices));
     if (data.deliveryOrders) localStorage.setItem(DO_STORAGE_KEY, JSON.stringify(data.deliveryOrders));
     if (data.shippingLabels) localStorage.setItem(LABEL_STORAGE_KEY, JSON.stringify(data.shippingLabels));
+    if (data.priceList) localStorage.setItem(PRICELIST_STORAGE_KEY, JSON.stringify(data.priceList));
     if (data.settings) localStorage.setItem(SETTINGS_KEY, JSON.stringify(data.settings));
     return true;
   } catch (e) {
@@ -69,6 +73,7 @@ export const clearAllData = () => {
   localStorage.removeItem(INVOICE_STORAGE_KEY);
   localStorage.removeItem(DO_STORAGE_KEY);
   localStorage.removeItem(LABEL_STORAGE_KEY);
+  localStorage.removeItem(PRICELIST_STORAGE_KEY);
   // Keep settings usually, but for hard reset we remove it too
   localStorage.removeItem(SETTINGS_KEY); 
 };
@@ -277,6 +282,39 @@ export const deleteShippingLabel = (id: string): void => {
   const labels = getShippingLabels();
   const newLabels = labels.filter(l => l.id !== id);
   localStorage.setItem(LABEL_STORAGE_KEY, JSON.stringify(newLabels));
+};
+
+// --- PRICE LIST FUNCTIONS ---
+
+export const getPriceList = (): PriceListItem[] => {
+  const data = localStorage.getItem(PRICELIST_STORAGE_KEY);
+  if (!data) {
+    localStorage.setItem(PRICELIST_STORAGE_KEY, JSON.stringify(INITIAL_PRICELIST));
+    return INITIAL_PRICELIST;
+  }
+  return JSON.parse(data);
+};
+
+export const saveAllPriceList = (items: PriceListItem[]): void => {
+  localStorage.setItem(PRICELIST_STORAGE_KEY, JSON.stringify(items));
+};
+
+export const savePriceListItem = (item: PriceListItem): void => {
+  const list = getPriceList();
+  const existingIndex = list.findIndex(l => l.id === item.id);
+  
+  if (existingIndex >= 0) {
+    list[existingIndex] = item;
+  } else {
+    list.push(item);
+  }
+  localStorage.setItem(PRICELIST_STORAGE_KEY, JSON.stringify(list));
+};
+
+export const deletePriceListItem = (id: string): void => {
+  const list = getPriceList();
+  const newList = list.filter(l => l.id !== id);
+  localStorage.setItem(PRICELIST_STORAGE_KEY, JSON.stringify(newList));
 };
 
 // --- INVENTORY FUNCTIONS ---
