@@ -13,6 +13,7 @@ import DeliveryOrderHistory from './components/DeliveryOrderHistory';
 // Inventory import removed
 import StickerForm from './components/StickerForm';
 import StickerHistory from './components/StickerHistory';
+import PriceList from './components/PriceList';
 
 import { ToastProvider } from './components/Toast';
 import NotificationManager from './components/NotificationManager';
@@ -20,8 +21,8 @@ import { POType } from './types';
 import { Loader2 } from 'lucide-react';
 
 // Services for Global Sync
-import { fetchPOsFromGoogle, fetchInvoicesFromGoogle, fetchDeliveryOrdersFromGoogle } from './services/googleSheetService';
-import { saveAllPOs, saveAllInvoices, saveAllDeliveryOrders } from './services/storage';
+import { fetchPOsFromGoogle, fetchInvoicesFromGoogle, fetchDeliveryOrdersFromGoogle, fetchPriceListFromGoogle } from './services/googleSheetService';
+import { saveAllPOs, saveAllInvoices, saveAllDeliveryOrders, saveAllPriceList } from './services/storage';
 
 const App: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -33,10 +34,11 @@ const App: React.FC = () => {
         setLoadingText('Sinkronisasi PO, Invoice & Surat Jalan...');
         
         // Fetch all data in parallel for speed
-        const [posResult, invResult, doResult] = await Promise.all([
+        const [posResult, invResult, doResult, plResult] = await Promise.all([
           fetchPOsFromGoogle(),
           fetchInvoicesFromGoogle(),
-          fetchDeliveryOrdersFromGoogle()
+          fetchDeliveryOrdersFromGoogle(),
+          fetchPriceListFromGoogle()
         ]);
 
         // Save POs if success
@@ -52,6 +54,11 @@ const App: React.FC = () => {
         // Save Delivery Orders if success
         if (doResult.success && doResult.data) {
           saveAllDeliveryOrders(doResult.data);
+        }
+
+        // Save Price List if success
+        if (plResult.success && plResult.data) {
+          saveAllPriceList(plResult.data);
         }
 
         setLoadingText('Memuat Dashboard...');
@@ -103,6 +110,7 @@ const App: React.FC = () => {
         <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/price-list" element={<PriceList />} />
             
             {/* Invoice Routes */}
             <Route path="/invoice/create" element={<InvoiceForm />} />
